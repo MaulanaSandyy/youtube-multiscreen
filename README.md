@@ -4,10 +4,10 @@
 
 **Watch multiple YouTube videos simultaneously in one screen**
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://yt-multiscrene.vercel.app/)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed_on-Vercel-black?style=for-the-badge&logo=vercel)](https://youtube-multiscreen.vercel.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-gray?style=for-the-badge&logo=github)](https://github.com/MaulanaSandyy/youtube-multiscreen)
 
-[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-Try_Now-red?style=for-the-badge)](https://yt-multiscrene.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-Try_Now-red?style=for-the-badge)](https://youtube-multiscreen.vercel.app/)
 
 </div>
 
@@ -54,7 +54,7 @@ Built with vanilla HTML, CSS, and JavaScript — no frameworks, no dependencies,
 
 ## Live Demo
 
-**[https://yt-multiscrene.vercel.app/](https://yt-multiscrene.vercel.app/)**
+**[https://youtube-multiscreen.vercel.app/](https://youtube-multiscreen.vercel.app/)**
 
 ### How to Use
 
