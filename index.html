@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Multi Screen</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <div class="top-bar">
+            <h1>YT Multi</h1>
+            <div class="count-buttons" id="countButtons">
+                <button data-count="2">2</button>
+                <button data-count="3">3</button>
+                <button data-count="4">4</button>
+                <button data-count="5">5</button>
+                <button data-count="6" class="active">6</button>
+                <button data-count="8">8</button>
+                <button data-count="10">10</button>
+            </div>
+            <div class="action-buttons">
+                <button id="btnPlayAll" class="btn btn-primary">Play All</button>
+                <button id="btnPauseAll" class="btn btn-secondary">Pause</button>
+                <button id="btnSyncAll" class="btn btn-accent">Sync</button>
+                <button id="btnClearAll" class="btn btn-danger">Clear</button>
+            </div>
+            <div class="master-audio">
+                <button id="btnMuteAll" class="btn-icon-sm" title="Mute/Unmute All">🔊</button>
+                <input type="range" id="masterVolume" min="0" max="100" value="100" />
+                <span id="masterVal" class="vol-val">100%</span>
+            </div>
+        </div>
+
+        <div class="audio-row" id="perVideoVol"></div>
+
+        <div class="input-row" id="inputRow"></div>
+
+        <div class="video-grid" id="videoGrid"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
