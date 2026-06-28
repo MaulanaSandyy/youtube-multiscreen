@@ -227,9 +227,8 @@ function applyAllVolumes() {
 // Player creation functions per platform
 function createYouTubePlayer(slot, videoId, index, isLive) {
     players[index] = null;
-    window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || function () { };
-    window._onYouTubeReady = window._onYouTubeReady || [];
-    window._onYouTubeReady.push(function () {
+
+    function buildPlayer() {
         try {
             players[index] = new YT.Player('player-' + index, {
                 height: '100%',
@@ -263,10 +262,19 @@ function createYouTubePlayer(slot, videoId, index, isLive) {
         } catch (err) {
             console.warn('Failed to create YouTube player ' + index, err);
         }
-    });
+    }
 
+    // If YouTube API is fully loaded, create player directly
     if (window.YT && window.YT.Player) {
-        window._onYouTubeReady.pop()();
+        buildPlayer();
+    } else if (window._ytPlayerCallbacksDone) {
+        // API was loaded before but queue was already processed
+        // This shouldn't happen, but handle it gracefully
+        buildPlayer();
+    } else {
+        // Queue the callback for when YouTube API is ready
+        window._ytPlayerQueue = window._ytPlayerQueue || [];
+        window._ytPlayerQueue.push(buildPlayer);
     }
 }
 
@@ -446,15 +454,9 @@ function loadVideos() {
     allMuted = false;
     btnMuteAll.textContent = '🔊';
 
-    // Load YouTube IFrame API
-    const old = document.getElementById('yt-iframe-api');
-    if (old) old.remove();
-    const tag = document.createElement('script');
-    tag.id = 'yt-iframe-api';
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-
     const validVideos = [];
+    let hasYouTube = false;
+
     for (let i = 0; i < videoCount; i++) {
         const inp = document.getElementById('input-' + i);
         const url = inp ? inp.value : '';
@@ -465,8 +467,26 @@ function loadVideos() {
                 const isLive = url.includes('/live') || url.includes('live=1');
                 validVideos.push({ index: i, platform, info, isLive });
                 liveFlags[i] = isLive;
+                if (platform === 'youtube') hasYouTube = true;
             }
         }
+    }
+
+    // Load YouTube IFrame API only if needed and not already loaded
+    if (hasYouTube && (!window.YT || !window.YT.Player)) {
+        window._ytPlayerQueue = [];
+        window._ytPlayerCallbacksDone = false;
+        const tag = document.createElement('script');
+        tag.id = 'yt-iframe-api';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+
+        window.onYouTubeIframeAPIReady = function () {
+            window._ytPlayerCallbacksDone = true;
+            const queue = window._ytPlayerQueue || [];
+            window._ytPlayerQueue = [];
+            queue.forEach(function (fn) { fn(); });
+        };
     }
 
     // Stagger load players
