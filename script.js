@@ -20,22 +20,125 @@ const masterVolumeSlider = document.getElementById('masterVolume');
 const masterVal = document.getElementById('masterVal');
 const perVideoVol = document.getElementById('perVideoVol');
 
-function extractVideoId(url) {
+// Platform colors for badges
+const platformColors = {
+    youtube: '#ff0000',
+    twitch: '#9146ff',
+    tiktok: '#000000',
+    instagram: '#E4405F',
+    facebook: '#1877F2',
+    dailymotion: '#0066DC',
+    vimeo: '#1AB7EA',
+    twitter: '#1DA1F2',
+    kick: '#53FC18',
+    rumble: '#85C742',
+    bilibili: '#00A1D6',
+};
+
+// Platform detection from URL
+function detectPlatform(url) {
+    if (!url) return null;
+    url = url.trim().toLowerCase();
+    if (/youtube\.com|youtu\.be/.test(url)) return 'youtube';
+    if (/twitch\.tv/.test(url)) return 'twitch';
+    if (/tiktok\.com/.test(url)) return 'tiktok';
+    if (/instagram\.com/.test(url)) return 'instagram';
+    if (/facebook\.com|fb\.watch/.test(url)) return 'facebook';
+    if (/dailymotion\.com|dai\.ly/.test(url)) return 'dailymotion';
+    if (/vimeo\.com/.test(url)) return 'vimeo';
+    if (/twitter\.com|x\.com/.test(url)) return 'twitter';
+    if (/kick\.com/.test(url)) return 'kick';
+    if (/rumble\.com/.test(url)) return 'rumble';
+    if (/bilibili\.com/.test(url)) return 'bilibili';
+    return null;
+}
+
+// Extract video/channel ID from URL based on platform
+function extractVideoInfo(url, platform) {
     if (!url) return null;
     url = url.trim();
-    const patterns = [
-        /youtube\.com\/live\/([a-zA-Z0-9_-]+)/,
-        /youtu\.be\/([a-zA-Z0-9_-]+)/,
-        /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+)/,
-        /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-        /youtube\.com\/v\/([a-zA-Z0-9_-]+)/,
-        /youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/,
-    ];
-    for (const p of patterns) {
-        const m = url.match(p);
-        if (m && m[1]) return m[1];
+
+    switch (platform) {
+        case 'youtube': {
+            const patterns = [
+                /youtube\.com\/live\/([a-zA-Z0-9_-]+)/,
+                /youtu\.be\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/v\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/,
+            ];
+            for (const p of patterns) {
+                const m = url.match(p);
+                if (m && m[1]) return { id: m[1], type: 'video' };
+            }
+            return null;
+        }
+        case 'twitch': {
+            let m = url.match(/twitch\.tv\/videos\/(\d+)/);
+            if (m) return { id: m[1], type: 'video' };
+            m = url.match(/twitch\.tv\/([a-zA-Z0-9_]+)\/?$/);
+            if (m && !['directory', 'settings', 'subscriptions', 'inventory', 'wallet', 'downloads', 'friends', 'prime', 'turbo', 'partners'].includes(m[1])) {
+                return { id: m[1], type: 'channel' };
+            }
+            return null;
+        }
+        case 'tiktok': {
+            const m = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        case 'instagram': {
+            let m = url.match(/instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)/);
+            if (m) return { id: m[1], type: 'post' };
+            m = url.match(/instagram\.com\/tv\/([a-zA-Z0-9_-]+)/);
+            if (m) return { id: m[1], type: 'post' };
+            return null;
+        }
+        case 'facebook': {
+            let m = url.match(/[?&]v=(\d+)/);
+            if (m) return { id: m[1], type: 'video' };
+            m = url.match(/facebook\.com\/.*?\/videos\/(\d+)/);
+            if (m) return { id: m[1], type: 'video' };
+            m = url.match(/fb\.watch\/([a-zA-Z0-9_-]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return { id: url, type: 'video', useUrl: true };
+        }
+        case 'dailymotion': {
+            let m = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            m = url.match(/dai\.ly\/([a-zA-Z0-9]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        case 'vimeo': {
+            const m = url.match(/vimeo\.com\/(\d+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        case 'twitter': {
+            const m = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+            if (m) return { id: m[1], type: 'tweet' };
+            return null;
+        }
+        case 'kick': {
+            const m = url.match(/kick\.com\/video\/([a-zA-Z0-9_-]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        case 'rumble': {
+            const m = url.match(/rumble\.com\/v([a-zA-Z0-9_-]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        case 'bilibili': {
+            const m = url.match(/bilibili\.com\/video\/(BV[a-zA-Z0-9]+)/);
+            if (m) return { id: m[1], type: 'video' };
+            return null;
+        }
+        default:
+            return null;
     }
-    return null;
 }
 
 function generateInputs() {
@@ -43,7 +146,7 @@ function generateInputs() {
     for (let i = 0; i < videoCount; i++) {
         const g = document.createElement('div');
         g.className = 'input-group';
-        g.innerHTML = '<input type="text" id="input-' + i + '" placeholder="Link #' + (i + 1) + '" /><button class="btn-x" data-i="' + i + '">&times;</button>';
+        g.innerHTML = '<input type="text" id="input-' + i + '" placeholder="YouTube, Twitch, TikTok, IG... Link #' + (i + 1) + '" /><button class="btn-x" data-i="' + i + '">&times;</button>';
         inputRow.appendChild(g);
     }
     inputRow.querySelectorAll('input').forEach(inp => {
@@ -99,18 +202,240 @@ function generatePerVideoVol() {
 
 function applyVolume(idx) {
     const p = players[idx];
-    if (!p || !p.setVolume) return;
-    if (videoMuted[idx] || allMuted) {
-        p.mute();
-    } else {
-        const vol = Math.round((videoVolumes[idx] / 100) * masterVolume);
-        p.unMute();
-        p.setVolume(vol);
+    if (!p) return;
+
+    const muted = videoMuted[idx] || allMuted;
+    const vol = Math.round((videoVolumes[idx] / 100) * masterVolume);
+
+    if (p._platform === 'youtube') {
+        if (muted) { p.mute(); } else { p.unMute(); p.setVolume(vol); }
+    } else if (p._platform === 'twitch') {
+        if (p.setMuted) p.setMuted(muted);
+        if (!muted && p.setVolume) p.setVolume(vol / 100);
+    } else if (p._platform === 'vimeo') {
+        if (muted) { p.setMuted(true); } else { p.setMuted(false); p.setVolume(vol / 100); }
+    } else if (p._platform === 'dailymotion') {
+        if (p.setMuted) p.setMuted(muted);
+        if (!muted && p.setVolume) p.setVolume(vol / 100);
     }
 }
 
 function applyAllVolumes() {
     for (const idx in players) applyVolume(+idx);
+}
+
+// Player creation functions per platform
+function createYouTubePlayer(slot, videoId, index, isLive) {
+    players[index] = null;
+    window.onYouTubeIframeAPIReady = window.onYouTubeIframeAPIReady || function () { };
+    window._onYouTubeReady = window._onYouTubeReady || [];
+    window._onYouTubeReady.push(function () {
+        try {
+            players[index] = new YT.Player('player-' + index, {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    autoplay: 0,
+                    controls: 0,
+                    rel: 0,
+                    modestbranding: 1,
+                    iv_load_policy: 3,
+                    playsinline: 1,
+                    disablekb: 1,
+                    fs: 0,
+                    cc_load_policy: 0,
+                    origin: window.location.origin,
+                    quality: 'small',
+                },
+                events: {
+                    onReady: function () {
+                        playerReadyCount++;
+                        players[index]._platform = 'youtube';
+                        applyVolume(index);
+                    },
+                    onError: function (e) {
+                        console.warn('YouTube Player ' + index + ' error:', e.data);
+                    },
+                },
+            });
+            players[index]._platform = 'youtube';
+        } catch (err) {
+            console.warn('Failed to create YouTube player ' + index, err);
+        }
+    });
+
+    if (window.YT && window.YT.Player) {
+        window._onYouTubeReady.pop()();
+    }
+}
+
+function createTwitchPlayer(slot, id, index, type) {
+    const domain = window.location.hostname;
+    const src = type === 'channel'
+        ? `https://player.twitch.tv/?channel=${id}&parent=${domain}&muted=false&autoplay=false`
+        : `https://player.twitch.tv/?video=v${id}&parent=${domain}&muted=false&autoplay=false`;
+
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = {
+        _platform: 'twitch',
+        _iframe: iframe,
+        _muted: false,
+        _volume: 1,
+        setVolume: function (v) { this._volume = v; },
+        setMuted: function (m) { this._muted = m; },
+        getVolume: function (cb) { cb(this._volume); },
+        isMuted: function (cb) { cb(this._muted); },
+    };
+    playerReadyCount++;
+}
+
+function createTikTokPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.tiktok.com/embed/v2/${videoId}`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'tiktok', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createInstagramPlayer(slot, shortcode, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.instagram.com/p/${shortcode}/embed/`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'instagram', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createFacebookPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/video/video.php?v=${videoId}&width=&show_text=false&height=`;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'facebook', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createDailymotionPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.dailymotion.com/embed/video/${videoId}?autoplay=0`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = {
+        _platform: 'dailymotion',
+        _iframe: iframe,
+        _muted: false,
+        _volume: 1,
+        setVolume: function (v) { this._volume = v; },
+        setMuted: function (m) { this._muted = m; },
+    };
+    playerReadyCount++;
+}
+
+function createVimeoPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://player.vimeo.com/video/${videoId}?badge=0&autopause=0&player_id=0`;
+    iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = {
+        _platform: 'vimeo',
+        _iframe: iframe,
+        _muted: false,
+        _volume: 1,
+        setVolume: function (v) { this._volume = v; },
+        setMuted: function (m) { this._muted = m; },
+    };
+    playerReadyCount++;
+}
+
+function createTwitterPlayer(slot, tweetId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&autoplay=false`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'twitter', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createKickPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://kick.com/embed/${videoId}`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'kick', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createRumblePlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://rumble.com/embed/v${videoId}/`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'rumble', _iframe: iframe };
+    playerReadyCount++;
+}
+
+function createBilibiliPlayer(slot, videoId, index) {
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://player.bilibili.com/player.html?bvid=${videoId}&autoplay=0&high_quality=1`;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.allowFullscreen = true;
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    slot.appendChild(iframe);
+
+    players[index] = { _platform: 'bilibili', _iframe: iframe };
+    playerReadyCount++;
 }
 
 function loadVideos() {
@@ -121,9 +446,9 @@ function loadVideos() {
     allMuted = false;
     btnMuteAll.textContent = '🔊';
 
+    // Load YouTube IFrame API
     const old = document.getElementById('yt-iframe-api');
     if (old) old.remove();
-
     const tag = document.createElement('script');
     tag.id = 'yt-iframe-api';
     tag.src = 'https://www.youtube.com/iframe_api';
@@ -133,58 +458,81 @@ function loadVideos() {
     for (let i = 0; i < videoCount; i++) {
         const inp = document.getElementById('input-' + i);
         const url = inp ? inp.value : '';
-        const id = extractVideoId(url);
-        if (id) {
-            const isLive = url.includes('/live') || url.includes('live=1');
-            validVideos.push({ index: i, videoId: id, isLive: isLive });
-            liveFlags[i] = isLive;
+        const platform = detectPlatform(url);
+        if (platform) {
+            const info = extractVideoInfo(url, platform);
+            if (info) {
+                const isLive = url.includes('/live') || url.includes('live=1');
+                validVideos.push({ index: i, platform, info, isLive });
+                liveFlags[i] = isLive;
+            }
         }
     }
 
-    window.onYouTubeIframeAPIReady = function () {
-        validVideos.forEach((v, delay) => {
-            setTimeout(() => {
-                const slot = document.getElementById('slot-' + v.index);
-                if (!slot) return;
-                slot.className = 'video-slot active';
-                slot.innerHTML = '<div class="video-label">Video ' + (v.index + 1) + '</div><div id="player-' + v.index + '"></div>';
+    // Stagger load players
+    validVideos.forEach((v, delay) => {
+        setTimeout(() => {
+            const slot = document.getElementById('slot-' + v.index);
+            if (!slot) return;
+            slot.className = 'video-slot active';
 
-                try {
-                    players[v.index] = new YT.Player('player-' + v.index, {
-                        height: '100%',
-                        width: '100%',
-                        videoId: v.videoId,
-                        playerVars: {
-                            autoplay: 0,
-                            controls: 0,
-                            rel: 0,
-                            modestbranding: 1,
-                            iv_load_policy: 3,
-                            playsinline: 1,
-                            disablekb: 1,
-                            fs: 0,
-                            cc_load_policy: 0,
-                            origin: window.location.origin,
-                            quality: 'small',
-                        },
-                        events: {
-                            onReady: function () {
-                                playerReadyCount++;
-                                applyVolume(v.index);
-                            },
-                            onError: function (e) {
-                                console.warn('Player ' + v.index + ' error:', e.data);
-                            },
-                        },
-                    });
-                } catch (err) {
-                    console.warn('Failed to create player ' + v.index, err);
-                }
-            }, delay * 500);
-        });
+            const label = document.createElement('div');
+            label.className = 'video-label';
+            label.textContent = 'Video ' + (v.index + 1);
 
-        setTimeout(() => { loading = false; }, validVideos.length * 500 + 1000);
-    };
+            const badge = document.createElement('div');
+            badge.className = 'platform-badge ' + v.platform;
+            badge.textContent = v.platform.charAt(0).toUpperCase() + v.platform.slice(1);
+
+            const playerContainer = document.createElement('div');
+            playerContainer.id = 'player-' + v.index;
+            playerContainer.style.width = '100%';
+            playerContainer.style.height = '100%';
+
+            slot.innerHTML = '';
+            slot.appendChild(label);
+            slot.appendChild(badge);
+            slot.appendChild(playerContainer);
+
+            switch (v.platform) {
+                case 'youtube':
+                    createYouTubePlayer(slot, v.info.id, v.index, v.isLive);
+                    break;
+                case 'twitch':
+                    createTwitchPlayer(playerContainer, v.info.id, v.index, v.info.type);
+                    break;
+                case 'tiktok':
+                    createTikTokPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'instagram':
+                    createInstagramPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'facebook':
+                    createFacebookPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'dailymotion':
+                    createDailymotionPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'vimeo':
+                    createVimeoPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'twitter':
+                    createTwitterPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'kick':
+                    createKickPlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'rumble':
+                    createRumblePlayer(playerContainer, v.info.id, v.index);
+                    break;
+                case 'bilibili':
+                    createBilibiliPlayer(playerContainer, v.info.id, v.index);
+                    break;
+            }
+        }, delay * 500);
+    });
+
+    setTimeout(() => { loading = false; }, validVideos.length * 500 + 1000);
 }
 
 function playAll() {
@@ -193,7 +541,9 @@ function playAll() {
     } else {
         for (const idx in players) {
             const p = players[idx];
-            if (p && p.playVideo) p.playVideo();
+            if (!p) continue;
+            if (p._platform === 'youtube' && p.playVideo) p.playVideo();
+            // Other platforms: iframes auto-play on user interaction
         }
     }
 }
@@ -201,51 +551,45 @@ function playAll() {
 function pauseAll() {
     for (const idx in players) {
         const p = players[idx];
-        if (p && p.pauseVideo) p.pauseVideo();
+        if (!p) continue;
+        if (p._platform === 'youtube' && p.pauseVideo) p.pauseVideo();
     }
 }
 
 function syncAll() {
     const targets = {};
 
-    // Determine target time for each player
     for (const idx in players) {
         const p = players[idx];
-        if (!p || !p.getDuration || !p.getCurrentTime) continue;
+        if (!p || p._platform !== 'youtube') continue;
+        if (!p.getDuration || !p.getCurrentTime) continue;
         const dur = p.getDuration();
         const cur = p.getCurrentTime();
 
         if (liveFlags[idx]) {
-            // Live: target = live edge (duration - small buffer)
             if (dur > 0) targets[idx] = dur - 2;
         } else {
             targets[idx] = cur;
         }
     }
 
-    // For non-live: find the latest position
     let latest = 0;
     for (const idx in targets) {
         if (liveFlags[idx]) continue;
         if (targets[idx] > latest) latest = targets[idx];
     }
 
-    // Apply: non-live videos sync to latest, live streams go to live edge
     function doSeek() {
         for (const idx in players) {
             const p = players[idx];
-            if (!p || !p.seekTo) continue;
+            if (!p || p._platform !== 'youtube' || !p.seekTo) continue;
             const target = liveFlags[idx] ? targets[idx] : latest;
             if (target === undefined || target <= 0) continue;
-            try {
-                p.seekTo(target, true);
-            } catch (e) {}
+            try { p.seekTo(target, true); } catch (e) { }
         }
     }
 
     doSeek();
-
-    // Retry once after 500ms for players that might have been buffering
     setTimeout(doSeek, 500);
 }
 

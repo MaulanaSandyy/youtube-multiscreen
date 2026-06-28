@@ -282,6 +282,32 @@ html, body {
     z-index: 10;
 }
 
+/* Platform Badges */
+.platform-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.55rem;
+    font-weight: 700;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.platform-badge.youtube { background: #ff0000; color: #fff; }
+.platform-badge.twitch { background: #9146ff; color: #fff; }
+.platform-badge.tiktok { background: #000; color: #fff; border: 1px solid #25f4ee; }
+.platform-badge.instagram { background: #E4405F; color: #fff; }
+.platform-badge.facebook { background: #1877F2; color: #fff; }
+.platform-badge.dailymotion { background: #0066DC; color: #fff; }
+.platform-badge.vimeo { background: #1AB7EA; color: #fff; }
+.platform-badge.twitter { background: #1DA1F2; color: #fff; }
+.platform-badge.kick { background: #53FC18; color: #000; }
+.platform-badge.rumble { background: #85C742; color: #fff; }
+.platform-badge.bilibili { background: #00A1D6; color: #fff; }
+
 @media (max-width: 900px) {
     .video-grid.count-5,
     .video-grid.count-6 { grid-template-columns: repeat(2, 1fr); }
